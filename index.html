@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#040810">
+<title>AquaReef · Tuning Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#040810;--panel:#0b1224;--panel-2:#101a30;--panel-3:#16223e;--border:#1a2540;--border-soft:#131c34;--accent:#00d4e6;--accent-glow:rgba(0,212,230,.45);--warn:#ff8a3d;--danger:#ff5466;--good:#2cd682;--text:#e8efff;--text-soft:#94a3c8;--text-faint:#4a5575;--uv:#b478ff;--violet:#7c5fff;--royal:#3565ff;--blue:#1098e0;--green:#2cd682;--red:#ff5466;--white:#d8e8ff}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;padding-bottom:60px;background-image:radial-gradient(ellipse 800px 600px at 80% -10%,rgba(0,212,230,.07),transparent 60%),radial-gradient(ellipse 600px 500px at 0% 100%,rgba(124,95,255,.05),transparent 60%);-webkit-font-smoothing:antialiased}
+header{background:rgba(7,13,24,.94);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);position:sticky;top:0;z-index:100;padding:12px 14px 0}
+.brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.brand-name{font-family:'Spectral',serif;font-weight:600;font-size:17px}
+.brand-name em{font-style:italic;color:var(--accent);font-weight:500;text-shadow:0 0 14px var(--accent-glow)}
+.brand-name .sub{color:var(--text-faint);font-weight:400;font-size:12px;margin-left:4px;font-family:'Inter',sans-serif}
+.conn-pill{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--text-faint);text-transform:uppercase;cursor:pointer}
+.conn-dot{width:6px;height:6px;border-radius:50%;background:var(--text-faint)}
+.conn-pill.connected{color:var(--good);border-color:rgba(44,214,130,.3)}
+.conn-pill.connected .conn-dot{background:var(--good);box-shadow:0 0 8px var(--good);animation:pulse 1.6s ease-in-out infinite}
+.conn-pill.error{color:var(--danger);border-color:rgba(255,84,102,.3)}
+.conn-pill.error .conn-dot{background:var(--danger)}
+@keyframes pulse{50%{opacity:.5}}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:0 14px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:transparent;border:none;color:var(--text-faint);font-family:'Inter',sans-serif;font-size:10.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:11px 12px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+main{padding:16px 14px;max-width:980px;margin:0 auto}
+section.view{display:none;animation:fade .3s}
+section.view.active{display:block}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.section-title{font-family:'Spectral',serif;font-weight:500;font-size:24px;letter-spacing:-.01em;margin-bottom:4px}
+.section-subtitle{font-size:13px;color:var(--text-soft);margin-bottom:18px}
+.cockpit{background:linear-gradient(135deg,var(--panel-2),var(--panel-3));border:1px solid var(--border);border-radius:10px;padding:22px 18px;margin-bottom:14px;position:relative;overflow:hidden}
+.cockpit::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(0,212,230,.1),transparent 60%);pointer-events:none}
+.cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;position:relative;z-index:1}
+.cm-stat .lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--text-faint);text-transform:uppercase}
+.cm-stat .val{font-family:'Spectral',serif;font-weight:500;font-size:38px;line-height:1;letter-spacing:-.025em;margin-top:4px;color:var(--accent);text-shadow:0 0 24px var(--accent-glow)}
+.cm-stat .val small{font-size:14px;color:var(--text-faint);margin-left:3px;font-weight:400}
+.cm-stat .meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-soft);margin-top:4px}
+.cm-bottom{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);position:relative;z-index:1}
+.cm-mini{text-align:center;padding:6px}
+.cm-mini .v{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:500;color:var(--text)}
+.cm-mini .l{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;margin-top:3px}
+.empty-cockpit{text-align:center;padding:30px 20px;font-family:'Spectral',serif;font-style:italic;font-size:15px;color:var(--text-faint)}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px}
+.card-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;gap:6px}
+.card-h-t{font-family:'Spectral',serif;font-weight:500;font-size:16px}
+.card-h-tag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase}
+.pig{margin-bottom:14px}.pig:last-child{margin-bottom:0}
+.pig-meta{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.pig-name{font-family:'Spectral',serif;font-style:italic;font-weight:500;font-size:14px}
+.pig-name .lbd{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-faint);margin-left:4px;letter-spacing:.06em}
+.pig-pct{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500}
+.pig-pct.good{color:var(--good)}.pig-pct.warn{color:var(--warn)}.pig-pct.danger{color:var(--danger)}.pig-pct.neutral{color:var(--text)}
+.pig-track{height:8px;background:rgba(255,255,255,.04);border-radius:4px;position:relative;overflow:visible}
+.pig-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.pig-fill.chla{background:linear-gradient(90deg,#2cd682,#5ae6a4);box-shadow:0 0 10px rgba(44,214,130,.4)}
+.pig-fill.chlc{background:linear-gradient(90deg,#5ae6a4,#88f0c4)}
+.pig-fill.perid{background:linear-gradient(90deg,#ff9c4a,#ffb070)}
+.pig-fill.fuco{background:linear-gradient(90deg,#ff7a30,#ff9858)}
+.pig-fill.bcar{background:linear-gradient(90deg,#ffd44a,#ffe070)}
+.pig-fill.chlb{background:linear-gradient(90deg,#adad4a,#c8c870)}
+.pig-fill.chld{background:linear-gradient(90deg,#c45a3a,#e88858)}
+.pig-target{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--text-soft);opacity:.7;border-radius:1px}
+.pig-target::after{content:'▼';position:absolute;top:-10px;left:-4px;font-size:8px;color:var(--text-soft)}
+.pig-status{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;margin-top:5px;text-transform:uppercase;color:var(--text-faint)}
+.pig-status.good{color:var(--good)}.pig-status.warn{color:var(--warn)}.pig-status.danger{color:var(--danger)}
+.divider{margin:16px 0 12px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.18em;color:var(--text-faint);text-transform:uppercase;display:flex;align-items:center;gap:12px}
+.divider::after{content:'';flex:1;height:1px;background:var(--border-soft)}
+.divider.danger{color:var(--danger)}
+.conn-tabs{display:flex;gap:4px;margin-bottom:14px;background:var(--bg);padding:4px;border-radius:6px;border:1px solid var(--border)}
+.conn-tab{flex:1;background:transparent;border:none;color:var(--text-faint);padding:9px 10px;border-radius:4px;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:500;cursor:pointer;transition:all .2s}
+.conn-tab.active{background:var(--accent);color:var(--bg);font-weight:600}
+.conn-section{display:none}.conn-section.active{display:block}
+.usb-warn{background:rgba(255,138,61,.06);border:1px solid var(--warn);border-left-width:3px;border-radius:4px;padding:12px 14px;margin-bottom:14px;font-family:'Spectral',serif;font-style:italic;font-size:13px;color:var(--text);line-height:1.5}
+.usb-warn strong{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--warn);display:block;margin-bottom:6px;font-weight:600}
+.usb-warn ul{margin-top:6px;padding-left:18px;font-size:12.5px}
+.usb-warn li{margin-bottom:3px;font-style:normal;font-family:'Inter',sans-serif;color:var(--text-soft)}
+.usb-status{background:var(--panel-2);border-radius:6px;padding:12px 14px;margin-bottom:12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-soft);line-height:1.5}
+.usb-status.error{color:var(--danger);border:1px solid rgba(255,84,102,.3)}
+.usb-status.success{color:var(--good);border:1px solid rgba(44,214,130,.3)}
+.usb-config{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.usb-config label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;display:block;margin-bottom:4px}
+.usb-config select,.usb-config input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 10px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;width:100%}
+.usb-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.usb-raw{background:#02050c;border:1px solid var(--border);border-radius:4px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#5ae6a4;max-height:220px;overflow-y:auto;margin-top:8px;white-space:pre-wrap;word-break:break-all;line-height:1.4}
+.usb-raw .hex{color:#7ba8d8}
+.usb-raw .ascii{color:#5ae6a4}
+.usb-raw-empty{color:var(--text-faint);font-style:italic}
+.detected-fields{display:grid;grid-template-columns:1fr;gap:6px;margin-top:10px}
+.df-row{display:grid;grid-template-columns:1fr 100px 100px;gap:8px;align-items:center;padding:8px 10px;background:var(--panel-2);border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px}
+.df-val{color:var(--accent);font-weight:600;text-align:right}
+.df-map{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600}
+.entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.full{grid-column:1/-1}
+.field label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;font-weight:500}
+.field input,.field textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.field input::placeholder{color:var(--text-faint)}
+.field textarea{font-family:'Inter',sans-serif;resize:vertical;min-height:50px}
+.btn{background:var(--accent);color:var(--bg);border:none;padding:12px 18px;border-radius:4px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all .2s}
+.btn:hover:not(:disabled){background:#00f0ff}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--text-soft);border:1px solid var(--border)}
+.btn.ghost:hover:not(:disabled){color:var(--text);border-color:var(--text-soft)}
+.btn.danger{background:var(--danger);color:white}
+.btn.full{width:100%}
+.btn.sm{padding:7px 12px;font-size:11px}
+.diag-issue{background:var(--panel);border:1px solid var(--border);border-left-width:3px;border-radius:4px;padding:14px 16px;margin-bottom:10px}
+.diag-issue.danger{border-left-color:var(--danger)}
+.diag-issue.warn{border-left-color:var(--warn)}
+.diag-issue.good{border-left-color:var(--good)}
+.diag-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;flex-wrap:wrap;gap:6px}
+.diag-name{font-family:'Spectral',serif;font-weight:500;font-size:14px}
+.diag-tag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint)}
+.diag-tag.danger{color:var(--danger)}
+.diag-tag.warn{color:var(--warn)}
+.diag-tag.good{color:var(--good)}
+.diag-text{font-family:'Spectral',serif;font-style:italic;font-size:13px;color:var(--text-soft);margin-top:4px;line-height:1.5}
+.diag-cause{font-family:'Inter',sans-serif;font-size:11px;color:var(--text-faint);margin-top:6px;font-weight:500}
+.adj-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:12px;position:relative;overflow:hidden}
+.adj-card.priority{border-color:var(--accent)}
+.adj-card.priority::before{content:'PRIORITÉ';position:absolute;top:8px;right:8px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.18em;background:var(--accent);color:var(--bg);padding:3px 7px;border-radius:2px;font-weight:700}
+.adj-channel-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.adj-dot{width:14px;height:14px;border-radius:50%;box-shadow:0 0 10px currentColor;flex-shrink:0}
+.adj-dot.uv{background:var(--uv);color:var(--uv)}.adj-dot.violet{background:var(--violet);color:var(--violet)}
+.adj-dot.royal{background:var(--royal);color:var(--royal)}.adj-dot.blue{background:var(--blue);color:var(--blue)}
+.adj-dot.green{background:var(--green);color:var(--green)}.adj-dot.red{background:var(--red);color:var(--red)}
+.adj-dot.white{background:var(--white);color:var(--white)}
+.adj-name{font-family:'Spectral',serif;font-style:italic;font-weight:600;font-size:16px;flex:1}
+.adj-name .nm{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:400;color:var(--text-faint);margin-left:6px}
+.adj-from-to{display:flex;align-items:center;justify-content:center;gap:12px;padding:12px;background:var(--bg);border-radius:6px;margin:6px 0 12px;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600}
+.adj-from{color:var(--text-faint)}
+.adj-arr{color:var(--text-faint);font-size:22px}
+.adj-to{color:var(--accent);text-shadow:0 0 12px var(--accent-glow);font-size:22px}
+.adj-explain{font-family:'Spectral',serif;font-style:italic;font-size:13px;color:var(--text-soft);line-height:1.5}
+.adj-explain strong{font-style:normal;font-weight:600;color:var(--text)}
+.no-adj{text-align:center;padding:24px 16px;color:var(--good);font-family:'Spectral',serif;font-style:italic;font-size:16px;background:rgba(44,214,130,.05);border:1px solid rgba(44,214,130,.2);border-radius:8px}
+.coral-list{display:flex;flex-direction:column;gap:6px}
+.coral{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--text-faint);border-radius:4px;padding:10px 14px}
+.coral.opt-good{border-left-color:var(--good)}.coral.opt-warn{border-left-color:var(--warn)}
+.coral.opt-danger{border-left-color:var(--danger)}.coral.opt-low{border-left-color:var(--royal)}
+.coral-r1{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.coral-name{font-family:'Spectral',serif;font-style:italic;font-weight:500;font-size:14px}
+.coral-name .morph{font-style:normal;font-family:'Inter',sans-serif;font-size:11.5px;color:var(--accent);font-weight:500;margin-left:4px}
+.coral-type{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase}
+.coral-r2{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-soft)}
+.coral-status{letter-spacing:.1em;text-transform:uppercase;font-size:9.5px;font-weight:500}
+.coral-status.good{color:var(--good)}.coral-status.warn{color:var(--warn)}.coral-status.danger{color:var(--danger)}.coral-status.low{color:var(--royal)}
+.helper{background:linear-gradient(135deg,rgba(0,212,230,.06),rgba(124,95,255,.04));border:1px solid var(--accent);border-left-width:3px;border-radius:4px;padding:12px 14px;margin:12px 0}
+.helper.warn{border-color:var(--warn);background:linear-gradient(135deg,rgba(255,138,61,.06),transparent)}
+.helper.danger{border-color:var(--danger);background:linear-gradient(135deg,rgba(255,84,102,.06),transparent)}
+.helper-t{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;color:var(--accent);text-transform:uppercase;font-weight:600;margin-bottom:6px}
+.helper.warn .helper-t{color:var(--warn)}.helper.danger .helper-t{color:var(--danger)}
+.helper-x{font-family:'Spectral',serif;font-style:italic;font-size:13.5px;color:var(--text);line-height:1.5}
+.ref-grid{display:grid;gap:10px}
+.ref-item{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 14px}
+.ref-item h4{font-family:'Spectral',serif;font-weight:500;font-size:15px;margin-bottom:6px;color:var(--accent)}
+.ref-item p{font-family:'Spectral',serif;font-style:italic;font-size:13px;color:var(--text-soft);line-height:1.5}
+.ref-item .num{font-family:'JetBrains Mono',monospace;color:var(--accent);font-style:normal}
+.score-card{background:linear-gradient(135deg,var(--panel-2),var(--panel-3));border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:14px;text-align:center;position:relative;overflow:hidden}
+.score-num{font-family:'Spectral',serif;font-weight:500;font-size:52px;line-height:.9;letter-spacing:-.03em}
+.score-num.good{color:var(--good);text-shadow:0 0 24px rgba(44,214,130,.4)}
+.score-num.warn{color:var(--warn)}.score-num.danger{color:var(--danger)}.score-num.neutral{color:var(--accent)}
+.score-num small{font-size:18px;color:var(--text-faint)}
+.score-lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;color:var(--text-faint);text-transform:uppercase;margin-top:6px}
+.score-msg{font-family:'Spectral',serif;font-style:italic;font-size:14px;color:var(--text-soft);margin-top:10px}
+.history-item{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:10px 12px;margin-bottom:6px;display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center}
+.h-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint)}
+.h-info{font-size:12px;color:var(--text-soft)}
+.h-info strong{color:var(--text)}
+.h-cpur{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--accent)}
+.del-x{background:transparent;border:none;color:var(--text-faint);font-size:18px;cursor:pointer;padding:0 4px}
+.del-x:hover{color:var(--danger)}
+@media (min-width:720px){.entry-grid{grid-template-columns:repeat(3,1fr)}.usb-config{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-name">Aqua<em>Reef</em><span class="sub">· Tuning Cockpit</span></div>
+    <div class="conn-pill" id="connPill" onclick="goConnect()"><span class="conn-dot"></span><span id="connText">Hors ligne</span></div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-view="live">Live</button>
+    <button class="tab" data-view="connect">Connexion</button>
+    <button class="tab" data-view="diag">Diagnostic</button>
+    <button class="tab" data-view="adj">Réglages</button>
+    <button class="tab" data-view="corals">Coraux</button>
+    <button class="tab" data-view="history">Journal</button>
+    <button class="tab" data-view="ref">Référence</button>
+  </div>
+</header>
+
+<main>
+
+<section class="view active" id="view-live">
+  <h1 class="section-title">Live</h1>
+  <p class="section-subtitle">Données PARwise Pro en temps réel · USB ou saisie</p>
+  <div class="cockpit" id="cockpitBox"></div>
+  <div class="card">
+    <div class="card-h"><span class="card-h-t">Pigments coralliens</span><span class="card-h-tag">à maximiser</span></div>
+    <div id="pigGood"></div>
+  </div>
+  <div class="card">
+    <div class="card-h"><span class="card-h-t">Anti-pigments</span><span class="card-h-tag">à minimiser</span></div>
+    <div id="pigBad"></div>
+  </div>
+  <div id="liveHelper"></div>
+</section>
+
+<section class="view" id="view-connect">
+  <h1 class="section-title">Connexion PARwise</h1>
+  <p class="section-subtitle">USB-C en mode Web Serial · saisie manuelle ultra-rapide en parallèle</p>
+
+  <div class="conn-tabs">
+    <button class="conn-tab active" id="ctab-usb" onclick="switchConn('usb')">USB-C</button>
+    <button class="conn-tab" id="ctab-manual" onclick="switchConn('manual')">Saisie manuelle</button>
+  </div>
+
+  <div class="conn-section active" id="conn-usb">
+    <div class="usb-warn" id="usbBrowserWarn" style="display:none">
+      <strong>API USB non disponible</strong>
+      Ton navigateur ne supporte ni WebUSB ni Web Serial. Utilise <strong>Chrome ou Edge</strong> (pas Samsung Internet) sur desktop ou Android. Sur iOS bascule en saisie manuelle.
+    </div>
+
+    <div class="usb-warn" id="contextWarn" style="display:none">
+      <strong>Contexte non sécurisé détecté</strong>
+      Le fichier est ouvert via <code id="ctxOrigin"></code>. WebUSB exige un contexte sécurisé. Solutions :
+      <ul>
+        <li>Sur PC · ouvre le fichier directement dans Chrome</li>
+        <li>Sur Android · héberge le fichier sur GitHub Pages (gratuit, 5 min) ou ouvre via Chrome avec une URL https://</li>
+        <li>Ou utilise la saisie manuelle qui fonctionne dans tous les contextes</li>
+      </ul>
+    </div>
+
+    <div class="usb-warn">
+      <strong>Connexion PARwise · WebUSB</strong>
+      L'app officielle ITC utilise WebUSB (et non Web Serial). C'est ce que cette app va essayer en premier.
+      <ul>
+        <li>Branche le PARwise en USB-C (avec adaptateur OTG si nécessaire)</li>
+        <li>Clique <strong>Connecter PARwise</strong> · une popup système liste les périphériques USB connectés</li>
+        <li>Sélectionne ton PARwise dans la liste · valide</li>
+        <li>L'app affiche le vendor/product ID puis les bytes reçus</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="card-h-t">Configuration</span><span class="card-h-tag" id="usbStateTag">Déconnecté</span></div>
+      
+      <div class="usb-config" style="grid-template-columns:1fr">
+        <div>
+          <label>Méthode de connexion</label>
+          <select id="connMethod" onchange="updateMethodUI()">
+            <option value="auto" selected>Auto · WebUSB d'abord, puis Serial</option>
+            <option value="webusb">WebUSB seul · recommandé pour PARwise</option>
+            <option value="webserial">Web Serial seul · CDC/COM port</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="usb-config" id="serialConfig" style="display:none">
+        <div><label>Baud rate</label>
+          <select id="baudRate">
+            <option>9600</option><option>19200</option><option>38400</option>
+            <option>57600</option><option selected>115200</option><option>230400</option><option>460800</option>
+          </select>
+        </div>
+        <div><label>Data bits</label><select id="dataBits"><option selected>8</option><option>7</option></select></div>
+        <div><label>Parity</label><select id="parity"><option selected>none</option><option>even</option><option>odd</option></select></div>
+      </div>
+      
+      <div class="usb-actions">
+        <button class="btn" id="btnConnect" onclick="connectPARwise()">Connecter PARwise</button>
+        <button class="btn ghost" id="btnDisconnect" onclick="disconnectAll()" disabled>Déconnecter</button>
+        <button class="btn ghost sm" onclick="clearRaw()">Vider moniteur</button>
+        <button class="btn ghost sm" onclick="copyRaw()">Copier raw</button>
+      </div>
+      <div class="usb-status" id="usbStatus">En attente de connexion…</div>
+      <div class="usb-status" id="deviceInfo" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="card-h-t">Valeurs détectées</span><span class="card-h-tag" id="detectedTag">—</span></div>
+      <div id="detectedFields">
+        <p style="color:var(--text-faint);font-size:12px;font-style:italic;text-align:center;padding:8px">Aucune valeur extraite. Connecte le PARwise puis prends une mesure dans l'app officielle pour voir les trames.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">
+        <span class="card-h-t">Moniteur brut</span>
+        <span class="card-h-tag" id="rxTag">0 byte</span>
+      </div>
+      <div class="usb-raw" id="usbRaw"><span class="usb-raw-empty">Le moniteur affichera ici les bytes bruts (hex + ASCII) une fois connecté.</span></div>
+    </div>
+  </div>
+
+  <div class="conn-section" id="conn-manual">
+    <div class="card">
+      <div class="card-h"><span class="card-h-t">Saisie manuelle</span><span class="card-h-tag">depuis l'app PARwise officielle</span></div>
+      <div class="entry-grid">
+        <div class="field"><label>cPUR (µmol)</label><input type="number" id="mCpur" placeholder="220"></div>
+        <div class="field"><label>PAR (µmol)</label><input type="number" id="mPar" placeholder="290"></div>
+        <div class="field"><label>Lux (opt.)</label><input type="number" id="mLux" placeholder="—"></div>
+        <div class="field"><label>Kelvin (opt.)</label><input type="number" id="mKelvin" placeholder="—"></div>
+      </div>
+      <div class="divider">Pigments · % depuis l'app PARwise (Pigment Analysis)</div>
+      <div class="entry-grid">
+        <div class="field"><label>Chlorophylle a</label><input type="number" id="mChla" min="0" max="100" placeholder="0–100"></div>
+        <div class="field"><label>Chlorophylle b</label><input type="number" id="mChlb" min="0" max="100" placeholder="0–100"></div>
+        <div class="field"><label>Chlorophylle c</label><input type="number" id="mChlc" min="0" max="100" placeholder="0–100"></div>
+        <div class="field"><label>Chlorophylle d</label><input type="number" id="mChld" min="0" max="100" placeholder="0–100"></div>
+        <div class="field"><label>Péridinine</label><input type="number" id="mPerid" min="0" max="100" placeholder="0–100"></div>
+        <div class="field"><label>Fucoxanthine</label><input type="number" id="mFuco" min="0" max="100" placeholder="0–100"></div>
+        <div class="field"><label>β-carotène</label><input type="number" id="mBcar" min="0" max="100" placeholder="0–100"></div>
+      </div>
+      <div class="divider">Position et notes</div>
+      <div class="entry-grid">
+        <div class="field"><label>Position</label><input type="text" id="mPos" placeholder="Ex · canopée Strawberry"></div>
+        <div class="field"><label>Profondeur (cm)</label><input type="number" id="mDepth" placeholder="0"></div>
+        <div class="field full"><label>Notes</label><textarea id="mNotes" placeholder="Observations, coraux concernés…"></textarea></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="submitManual()">Valider la mesure</button>
+        <button class="btn ghost" onclick="clearManual()">Vider</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-diag">
+  <h1 class="section-title">Diagnostic</h1>
+  <p class="section-subtitle">Analyse de la mesure actuelle · ce qui va et ce qui ne va pas</p>
+  <div id="diagBox"><p style="color:var(--text-faint);font-style:italic;text-align:center;padding:24px">Aucune mesure à diagnostiquer. Connecte le PARwise ou saisis une mesure manuelle.</p></div>
+</section>
+
+<section class="view" id="view-adj">
+  <h1 class="section-title">Réglages Hydra</h1>
+  <p class="section-subtitle">Ajustements précis canal par canal · à appliquer aux 6 luminaires</p>
+  <div id="adjBox"><p style="color:var(--text-faint);font-style:italic;text-align:center;padding:24px">Aucune recommandation. Une mesure est nécessaire.</p></div>
+</section>
+
+<section class="view" id="view-corals">
+  <h1 class="section-title">Placement des coraux</h1>
+  <p class="section-subtitle">Selon le cPUR mesuré à la position courante</p>
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;flex:1">cPUR à cette position</label>
+      <input type="number" id="cpurAtPos" value="220" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:14px;text-align:center" oninput="renderCorals()">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint)">µmol</span>
+    </div>
+  </div>
+  <div class="coral-list" id="coralList"></div>
+</section>
+
+<section class="view" id="view-history">
+  <h1 class="section-title">Journal</h1>
+  <p class="section-subtitle">Historique des mesures sauvegardées</p>
+  <div class="card">
+    <div class="card-h"><span class="card-h-t">Mesures</span><span class="card-h-tag" id="histCount">0 mesure</span></div>
+    <div id="histList"><p style="color:var(--text-faint);font-style:italic;text-align:center;padding:12px;font-size:12px">Aucune mesure enregistrée</p></div>
+    <div style="margin-top:12px"><button class="btn ghost danger sm" onclick="clearHistory()">Tout effacer</button></div>
+  </div>
+</section>
+
+<section class="view" id="view-ref">
+  <h1 class="section-title">Référence rapide</h1>
+  <p class="section-subtitle">Cibles et seuils issus des cahiers I et II</p>
+  <div class="ref-grid">
+    <div class="ref-item"><h4>cPUR canopée SPS</h4><p><span class="num">220–250 µmol/m²/s</span> au pic. Au-delà de <span class="num">350</span> → photoinhibition. Sous <span class="num">150</span> → croissance limitée.</p></div>
+    <div class="ref-item"><h4>DLI cible · 24 h</h4><p><span class="num">9–13 mol/m²/j</span> pour SPS dominant. Calculé sur photopériode 12 h.</p></div>
+    <div class="ref-item"><h4>Pigments coralliens · cible</h4><p>Chla <span class="num">≥ 90 %</span> · Chlc <span class="num">≥ 85 %</span> · Péridinine <span class="num">≥ 80 %</span> · Fucoxanthine et β-carotène <span class="num">≥ 85 %</span></p></div>
+    <div class="ref-item"><h4>Anti-pigments · plafond</h4><p>Chl b <span class="num">&lt; 50 %</span> (algues vertes). Chl d <span class="num">&lt; 35 %</span> (cyanobactéries). Au-delà → ton spectre fuit.</p></div>
+    <div class="ref-item"><h4>Photoacclimatation · règle 5/5</h4><p>Maximum <span class="num">5 %</span> par étape. Minimum <span class="num">5 jours</span> entre changements. Acropora muricata = 20 jours pour photoacclimater.</p></div>
+    <div class="ref-item"><h4>Spectre AB+ Holy Grail</h4><p>UV <span class="num">55</span> · Violet <span class="num">70</span> · Royal Blue <span class="num">85</span> · Blue <span class="num">80</span> · Green <span class="num">15</span> · Red <span class="num">18</span> · Cool White <span class="num">14 %</span></p></div>
+    <div class="ref-item"><h4>Canaux nourrissant les anti-pigments</h4><p>Cool White large spectre · Green &gt; <span class="num">20 %</span> · Red &gt; <span class="num">22 %</span>. Premier coupable habituel · Cool White.</p></div>
+    <div class="ref-item"><h4>Protéines fluorescentes</h4><p>GFP excitée par UV <span class="num">395 nm</span> · CFP par RB <span class="num">458 nm</span> · YFP par Blue <span class="num">514 nm</span> · RFP par Green <span class="num">558 nm</span>.</p></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════
+const PIGMENTS = [
+  { key:'chla', name:'Chlorophylle a', lambda:'440 + 675 nm', desirable:true, target:90, color:'chla' },
+  { key:'chlc', name:'Chlorophylle c', lambda:'450 + 630 nm', desirable:true, target:85, color:'chlc' },
+  { key:'perid', name:'Péridinine', lambda:'480 nm', desirable:true, target:80, color:'perid' },
+  { key:'fuco', name:'Fucoxanthine', lambda:'460 nm', desirable:true, target:85, color:'fuco' },
+  { key:'bcar', name:'β-Carotène', lambda:'450 + 478 nm', desirable:true, target:85, color:'bcar' },
+  { key:'chlb', name:'Chlorophylle b', lambda:'460 + 645 nm', desirable:false, target:50, color:'chlb', warn:'algues vertes filamenteuses' },
+  { key:'chld', name:'Chlorophylle d', lambda:'697 nm', desirable:false, target:35, color:'chld', warn:'cyanobactéries' },
+];
+
+const CHANNELS = [
+  { key:'uv', name:'UV', nm:405, color:'uv', target:55 },
+  { key:'violet', name:'Violet', nm:420, color:'violet', target:70 },
+  { key:'royal', name:'Royal Blue', nm:450, color:'royal', target:85 },
+  { key:'blue', name:'Blue', nm:470, color:'blue', target:80 },
+  { key:'green', name:'Green', nm:520, color:'green', target:15 },
+  { key:'red', name:'Red', nm:660, color:'red', target:18 },
+  { key:'white', name:'Cool White', nm:0, color:'white', target:14 },
+];
+
+const CORALS = [
+  { name:'Anacropora trio', morph:'', type:'SPS', ek:220, em:400 },
+  { name:'Acropora tenuis', morph:'', type:'SPS', ek:280, em:450 },
+  { name:'Acropora echinata', morph:'ORA Hawkins ★', type:'SPS', ek:300, em:450 },
+  { name:'Acropora suharsonoi', morph:'', type:'SPS', ek:280, em:450 },
+  { name:'Acropora microclados', morph:'Strawberry Shortcake ★', type:'SPS', ek:300, em:450 },
+  { name:'Acropora horrida', morph:'', type:'SPS', ek:180, em:400 },
+  { name:'Acropora millepora', morph:'Green Slimer', type:'SPS', ek:280, em:450 },
+  { name:'Acropora valida', morph:'', type:'SPS', ek:280, em:450 },
+  { name:'Acropora lokani', morph:'', type:'SPS', ek:220, em:400 },
+  { name:'Montipora digitata', morph:'', type:'SPS', ek:220, em:420 },
+  { name:'Montipora capricornis', morph:'Sunset Cap', type:'SPS', ek:220, em:420 },
+  { name:'Montipora confusa', morph:'', type:'SPS', ek:220, em:420 },
+  { name:'Stylophora pistillata', morph:'', type:'SPS', ek:180, em:400 },
+  { name:'Stylophora sp.', morph:'Milka', type:'SPS', ek:220, em:400 },
+  { name:'Favites sp.', morph:'War Coral', type:'LPS', ek:130, em:300 },
+  { name:'Trachyphyllia geoffroyi', morph:'Toxic Green', type:'LPS', ek:80, em:200 },
+  { name:'Duncanopsammia axifuga', morph:'', type:'LPS', ek:130, em:300 },
+  { name:'Cyphastrea decadia', morph:'', type:'LPS', ek:110, em:300 },
+  { name:'Caulastraea furcata', morph:'', type:'LPS', ek:110, em:300 },
+  { name:'Caulastraea echinulata', morph:'', type:'LPS', ek:110, em:300 },
+  { name:'Micromussa lordhowensis', morph:'Acan Lord', type:'LPS', ek:80, em:200 },
+  { name:'Pectinia sp.', morph:'', type:'LPS', ek:110, em:250 },
+  { name:'Sarcophyton sp.', morph:'', type:'Mou', ek:130, em:300 },
+  { name:'Gorgone', morph:'Valentina', type:'Mou', ek:130, em:350 },
+  { name:'Discosoma sp.', morph:'Neon Green', type:'Mou', ek:80, em:250 },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let state = {
+  current: null, // { cpur, par, lux, kelvin, pigments:{} }
+  history: [],
+  mapping: null, // { cpur:{type,index/key}, ... } learned from USB
+  rawBuffer: '',
+  rxBytes: 0,
+};
+
+let serialPort = null;
+let serialReader = null;
+let serialReading = false;
+let textBuffer = '';
+
+function saveState() {
+  try {
+    localStorage.setItem('aquareef-cockpit-v1', JSON.stringify({
+      history: state.history,
+      mapping: state.mapping,
+      current: state.current,
+    }));
+  } catch(e) {}
+}
+function loadState() {
+  try {
+    const s = localStorage.getItem('aquareef-cockpit-v1');
+    if (s) {
+      const p = JSON.parse(s);
+      Object.assign(state, p);
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONNECTION · WebUSB primary + WebSerial fallback
+// ═══════════════════════════════════════════════════════════════
+let usbDevice = null;
+let usbReading = false;
+let usbEndpointIn = null;
+let usbInterfaceNumber = null;
+let connectionMode = null; // 'webusb' or 'webserial'
+
+function checkSerialSupport() {
+  const hasUsb = 'usb' in navigator;
+  const hasSerial = 'serial' in navigator;
+  if (!hasUsb && !hasSerial) {
+    document.getElementById('usbBrowserWarn').style.display = 'block';
+    document.getElementById('btnConnect').disabled = true;
+    return false;
+  }
+  // Check if context is secure (required for WebUSB/WebSerial)
+  if (!window.isSecureContext) {
+    const ctxBox = document.getElementById('contextWarn');
+    const ctxOrigin = document.getElementById('ctxOrigin');
+    if (ctxBox && ctxOrigin) {
+      ctxOrigin.textContent = window.location.protocol + '//' + (window.location.host || 'local');
+      ctxBox.style.display = 'block';
+    }
+  }
+  updateMethodUI();
+  return true;
+}
+
+function updateMethodUI() {
+  const method = document.getElementById('connMethod').value;
+  const serialCfg = document.getElementById('serialConfig');
+  serialCfg.style.display = (method === 'webserial' || method === 'auto') ? 'grid' : 'none';
+}
+
+async function connectPARwise() {
+  const method = document.getElementById('connMethod').value;
+  setUsbStatus('Demande d\'accès USB…', 'info');
+  setConnPill(false); // reset error state
+  hideDeviceInfo();
+  
+  try {
+    if (method === 'webusb') {
+      await connectWebUSB();
+    } else if (method === 'webserial') {
+      await connectWebSerial();
+    } else {
+      // Auto: try WebUSB first
+      let webusbWorked = false;
+      if ('usb' in navigator) {
+        try { 
+          await connectWebUSB(); 
+          webusbWorked = true;
+        } catch(e) { 
+          if (e.name === 'NotFoundError') {
+            // User cancelled the WebUSB picker - don't fall through, just stop
+            setUsbStatus('Aucun périphérique sélectionné dans la popup WebUSB.', 'info');
+            return;
+          }
+          setUsbStatus('WebUSB échec · ' + (e.message || e) + ' · tentative Web Serial…', 'info');
+        }
+      }
+      if (!webusbWorked && 'serial' in navigator) {
+        await connectWebSerial();
+      }
+    }
+  } catch(e) {
+    if (e.name === 'NotFoundError') {
+      setUsbStatus('Aucun périphérique sélectionné. Vérifie que le PARwise est bien branché et apparaît dans la popup.', 'info');
+    } else {
+      setUsbStatus('Erreur · ' + (e.message || e), 'error');
+      setConnPill(false, true);
+    }
+  }
+}
+
+// ─── WebUSB ───
+async function connectWebUSB() {
+  if (!('usb' in navigator)) throw new Error('WebUSB non supporté');
+  
+  // No filters = show all USB devices so user can pick PARwise
+  usbDevice = await navigator.usb.requestDevice({ filters: [] });
+  connectionMode = 'webusb';
+  
+  const info = `Vendor ID · 0x${usbDevice.vendorId.toString(16).padStart(4,'0').toUpperCase()}
+Product ID · 0x${usbDevice.productId.toString(16).padStart(4,'0').toUpperCase()}
+Manufacturer · ${usbDevice.manufacturerName || '—'}
+Product · ${usbDevice.productName || '—'}
+Serial · ${usbDevice.serialNumber || '—'}`;
+  showDeviceInfo(info);
+  
+  await usbDevice.open();
+  if (usbDevice.configuration === null) {
+    await usbDevice.selectConfiguration(1);
+  }
+  
+  // Find the first IN endpoint we can read from
+  let foundEndpoint = false;
+  for (const intf of usbDevice.configuration.interfaces) {
+    for (const alt of intf.alternates) {
+      for (const ep of alt.endpoints) {
+        if (ep.direction === 'in' && (ep.type === 'bulk' || ep.type === 'interrupt')) {
+          usbInterfaceNumber = intf.interfaceNumber;
+          usbEndpointIn = ep.endpointNumber;
+          try {
+            await usbDevice.claimInterface(usbInterfaceNumber);
+            foundEndpoint = true;
+            break;
+          } catch(e) {
+            // Try next interface if this one is blocked by OS driver
+            console.log('Cannot claim interface ' + intf.interfaceNumber + ': ' + e.message);
+          }
+        }
+      }
+      if (foundEndpoint) break;
+    }
+    if (foundEndpoint) break;
+  }
+  
+  if (!foundEndpoint) {
+    throw new Error('Aucun endpoint IN bulk/interrupt accessible. L\'OS bloque peut-être l\'interface (driver chargé).');
+  }
+  
+  setUsbStatus(`✓ Connecté en WebUSB · interface ${usbInterfaceNumber}, endpoint ${usbEndpointIn}. Prends une mesure dans l'app PARwise officielle pour voir les trames.`, 'success');
+  setConnPill(true);
+  document.getElementById('btnConnect').disabled = true;
+  document.getElementById('btnDisconnect').disabled = false;
+  document.getElementById('usbStateTag').textContent = 'WebUSB';
+  
+  usbReading = true;
+  readUsbLoop();
+}
+
+async function readUsbLoop() {
+  while (usbReading && usbDevice && usbDevice.opened) {
+    try {
+      const result = await usbDevice.transferIn(usbEndpointIn, 64);
+      if (result.status === 'ok' && result.data && result.data.byteLength > 0) {
+        const bytes = new Uint8Array(result.data.buffer);
+        handleIncomingBytes(bytes);
+      } else if (result.status === 'stall') {
+        await usbDevice.clearHalt('in', usbEndpointIn);
+      }
+    } catch (e) {
+      if (usbReading) {
+        setUsbStatus('Erreur lecture USB · ' + (e.message || e), 'error');
+      }
+      break;
+    }
+  }
+}
+
+// ─── WebSerial ───
+async function connectWebSerial() {
+  if (!('serial' in navigator)) throw new Error('Web Serial non supporté');
+  
+  serialPort = await navigator.serial.requestPort();
+  connectionMode = 'webserial';
+  
+  const info = serialPort.getInfo ? serialPort.getInfo() : {};
+  if (info.usbVendorId) {
+    showDeviceInfo(`Vendor ID · 0x${info.usbVendorId.toString(16).padStart(4,'0').toUpperCase()}
+Product ID · 0x${(info.usbProductId||0).toString(16).padStart(4,'0').toUpperCase()}`);
+  }
+  
+  const config = {
+    baudRate: parseInt(document.getElementById('baudRate').value),
+    dataBits: parseInt(document.getElementById('dataBits').value),
+    parity: document.getElementById('parity').value,
+    stopBits: 1,
+    flowControl: 'none',
+  };
+  
+  await serialPort.open(config);
+  setUsbStatus(`✓ Connecté en Web Serial à ${config.baudRate} baud. Prends une mesure dans l'app PARwise.`, 'success');
+  setConnPill(true);
+  document.getElementById('btnConnect').disabled = true;
+  document.getElementById('btnDisconnect').disabled = false;
+  document.getElementById('usbStateTag').textContent = 'Web Serial';
+  
+  serialReading = true;
+  readSerialLoop();
+}
+
+async function readSerialLoop() {
+  while (serialReading && serialPort && serialPort.readable) {
+    try {
+      serialReader = serialPort.readable.getReader();
+      while (serialReading) {
+        const { value, done } = await serialReader.read();
+        if (done) break;
+        if (value) handleIncomingBytes(value);
+      }
+    } catch (e) {
+      if (serialReading) {
+        setUsbStatus('Erreur lecture · ' + (e.message || e), 'error');
+      }
+    } finally {
+      try { serialReader.releaseLock(); } catch(e){}
+    }
+  }
+}
+
+// ─── Disconnect (handles both modes) ───
+async function disconnectAll() {
+  // WebUSB
+  usbReading = false;
+  if (usbDevice && usbDevice.opened) {
+    try { await usbDevice.releaseInterface(usbInterfaceNumber); } catch(e){}
+    try { await usbDevice.close(); } catch(e){}
+  }
+  usbDevice = null;
+  usbEndpointIn = null;
+  usbInterfaceNumber = null;
+  
+  // WebSerial
+  serialReading = false;
+  try { if (serialReader) await serialReader.cancel(); } catch(e){}
+  try { if (serialPort) await serialPort.close(); } catch(e){}
+  serialPort = null;
+  serialReader = null;
+  
+  connectionMode = null;
+  setConnPill(false);
+  setUsbStatus('Déconnecté.', 'info');
+  hideDeviceInfo();
+  document.getElementById('btnConnect').disabled = false;
+  document.getElementById('btnDisconnect').disabled = true;
+  document.getElementById('usbStateTag').textContent = 'Déconnecté';
+}
+
+function showDeviceInfo(text) {
+  const el = document.getElementById('deviceInfo');
+  el.textContent = text;
+  el.style.display = 'block';
+  el.className = 'usb-status success';
+}
+
+function hideDeviceInfo() {
+  const el = document.getElementById('deviceInfo');
+  if (el) el.style.display = 'none';
+}
+
+function handleIncomingBytes(uint8Array) {
+  state.rxBytes += uint8Array.length;
+  document.getElementById('rxTag').textContent = state.rxBytes + ' byte' + (state.rxBytes>1?'s':'');
+  
+  // Build hex+ASCII display
+  const lines = [];
+  let hex = '', ascii = '';
+  for (let i = 0; i < uint8Array.length; i++) {
+    const b = uint8Array[i];
+    hex += b.toString(16).padStart(2, '0').toUpperCase() + ' ';
+    ascii += (b >= 32 && b < 127) ? String.fromCharCode(b) : '·';
+    if ((i + 1) % 16 === 0 || i === uint8Array.length - 1) {
+      const padHex = hex.padEnd(16 * 3, ' ');
+      lines.push(`<span class="hex">${padHex}</span> <span class="ascii">${ascii}</span>`);
+      hex = ''; ascii = '';
+    }
+  }
+  
+  state.rawBuffer = lines.join('\n') + '\n' + state.rawBuffer;
+  if (state.rawBuffer.length > 8000) state.rawBuffer = state.rawBuffer.slice(0, 8000);
+  
+  document.getElementById('usbRaw').innerHTML = state.rawBuffer || '<span class="usb-raw-empty">…</span>';
+  
+  // Try to parse as text (most likely format for PARwise — ITC says "send results over USB")
+  try {
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+    textBuffer += text;
+    // Process line-by-line if newlines present
+    if (textBuffer.includes('\n')) {
+      const lines = textBuffer.split('\n');
+      textBuffer = lines.pop(); // keep incomplete line in buffer
+      lines.forEach(line => parseTextLine(line.trim()));
+    }
+    // Also try to parse the buffer as JSON if it looks complete
+    if (textBuffer.length > 1000) textBuffer = textBuffer.slice(-1000);
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROTOCOL PARSER · attempts multiple known patterns
+// ═══════════════════════════════════════════════════════════════
+function parseTextLine(line) {
+  if (!line) return;
+  
+  // Pattern 1: JSON object
+  if (line.startsWith('{') && line.endsWith('}')) {
+    try {
+      const obj = JSON.parse(line);
+      handleParsedObject(obj);
+      return;
+    } catch(e) {}
+  }
+  
+  // Pattern 2: KEY=VALUE,KEY=VALUE
+  if (line.includes('=') && line.includes(',')) {
+    const obj = {};
+    line.split(',').forEach(pair => {
+      const [k, v] = pair.split('=');
+      if (k && v && !isNaN(parseFloat(v))) obj[k.trim().toLowerCase()] = parseFloat(v);
+    });
+    if (Object.keys(obj).length >= 3) { handleParsedObject(obj); return; }
+  }
+  
+  // Pattern 3: KEY: VALUE on one line, accumulate
+  const match = line.match(/^([A-Za-z_][A-Za-z0-9_ ]*)\s*[:=]\s*(-?\d+\.?\d*)/);
+  if (match) {
+    const key = match[1].trim().toLowerCase().replace(/\s+/g, '_');
+    const val = parseFloat(match[2]);
+    parsedAccumulator[key] = val;
+    parsedAccumulator._lastUpdate = Date.now();
+    
+    // After 500ms of silence, flush accumulator
+    clearTimeout(parsedFlushTimer);
+    parsedFlushTimer = setTimeout(flushAccumulator, 500);
+    return;
+  }
+  
+  // Pattern 4: CSV row of numbers (PARwise might send: cpur,par,lux,kelvin,chla,chlb,chlc,chld,perid,fuco,bcar)
+  const csv = line.split(/[,;\t]/).map(v => parseFloat(v));
+  if (csv.length >= 8 && csv.every(v => !isNaN(v))) {
+    handleCsvRow(csv);
+    return;
+  }
+  
+  // Pattern 5: space-separated numbers
+  const ssv = line.split(/\s+/).map(v => parseFloat(v)).filter(v => !isNaN(v));
+  if (ssv.length >= 8) {
+    handleCsvRow(ssv);
+    return;
+  }
+}
+
+let parsedAccumulator = {};
+let parsedFlushTimer = null;
+function flushAccumulator() {
+  if (Object.keys(parsedAccumulator).length > 1) {
+    handleParsedObject(parsedAccumulator);
+  }
+  parsedAccumulator = {};
+}
+
+function handleParsedObject(obj) {
+  // Map common PARwise keys
+  const m = {};
+  const keyMap = {
+    cpur: ['cpur', 'cpur_value', 'cpur_µmol', 'cpur_umol'],
+    par:  ['par', 'ppfd', 'par_value', 'par_umol'],
+    lux:  ['lux', 'lux_value', 'illuminance'],
+    kelvin: ['k', 'kelvin', 'cct', 'color_temp', 'cct_kelvin'],
+    chla: ['chla', 'chl_a', 'chlorophyll_a', 'chlorophyllaa'],
+    chlb: ['chlb', 'chl_b', 'chlorophyll_b'],
+    chlc: ['chlc', 'chl_c', 'chlorophyll_c'],
+    chld: ['chld', 'chl_d', 'chlorophyll_d'],
+    perid: ['perid', 'peridinin', 'peri'],
+    fuco: ['fuco', 'fucoxanthin', 'fucoxanthine'],
+    bcar: ['bcar', 'beta_carotene', 'b_carotene', 'beta-carotene', 'bcarotene'],
+  };
+  
+  let hits = 0;
+  for (const [target, sources] of Object.entries(keyMap)) {
+    for (const src of sources) {
+      if (obj[src] !== undefined) {
+        m[target] = parseFloat(obj[src]);
+        hits++;
+        break;
+      }
+    }
+  }
+  
+  // Also try direct field name match (lowercase obj keys)
+  const lc = {};
+  for (const k in obj) lc[k.toLowerCase().replace(/[^a-z0-9]/g,'')] = obj[k];
+  for (const target in keyMap) {
+    if (m[target] === undefined) {
+      for (const src of keyMap[target]) {
+        const norm = src.replace(/[^a-z0-9]/g,'');
+        if (lc[norm] !== undefined) { m[target] = parseFloat(lc[norm]); hits++; break; }
+      }
+    }
+  }
+  
+  updateDetectedFields(obj, m, hits);
+  if (hits >= 3) commitMeasurement(m);
+}
+
+function handleCsvRow(arr) {
+  // Heuristic: if length matches 11 (PARwise canonical: cpur,par,lux,kelvin,chla,chlb,chlc,chld,perid,fuco,bcar)
+  if (arr.length === 11) {
+    commitMeasurement({
+      cpur:arr[0], par:arr[1], lux:arr[2], kelvin:arr[3],
+      chla:arr[4], chlb:arr[5], chlc:arr[6], chld:arr[7],
+      perid:arr[8], fuco:arr[9], bcar:arr[10],
+    });
+  } else if (arr.length === 7) {
+    // Maybe just pigments
+    commitMeasurement({ chla:arr[0], chlb:arr[1], chlc:arr[2], chld:arr[3], perid:arr[4], fuco:arr[5], bcar:arr[6] });
+  } else {
+    // Show as detected raw values for manual mapping
+    const obj = {};
+    arr.forEach((v, i) => { obj['field_' + i] = v; });
+    updateDetectedFields(obj, {}, 0);
+  }
+}
+
+function updateDetectedFields(rawObj, mapped, hits) {
+  const box = document.getElementById('detectedFields');
+  document.getElementById('detectedTag').textContent = hits + ' / 11 mappés';
+  
+  const rows = [];
+  for (const [k, v] of Object.entries(rawObj)) {
+    if (typeof v === 'number') {
+      const mappedTo = Object.entries(mapped).find(([_, val]) => val === v);
+      const tag = mappedTo ? mappedTo[0].toUpperCase() : '—';
+      rows.push(`<div class="df-row"><span>${k}</span><span class="df-val">${v.toFixed(2)}</span><span class="df-map">${tag}</span></div>`);
+    }
+  }
+  
+  if (rows.length === 0) {
+    box.innerHTML = '<p style="color:var(--text-faint);font-size:12px;font-style:italic;text-align:center;padding:8px">Aucune valeur extraite. Connecte le PARwise puis prends une mesure.</p>';
+  } else {
+    box.innerHTML = '<div class="detected-fields">' + rows.join('') + '</div>';
+  }
+}
+
+function commitMeasurement(m) {
+  state.current = {
+    timestamp: Date.now(),
+    source: 'usb',
+    cpur: m.cpur || null,
+    par: m.par || null,
+    lux: m.lux || null,
+    kelvin: m.kelvin || null,
+    pigments: {
+      chla: m.chla, chlb: m.chlb, chlc: m.chlc, chld: m.chld,
+      perid: m.perid, fuco: m.fuco, bcar: m.bcar,
+    },
+  };
+  saveState();
+  renderAll();
+}
+
+function setUsbStatus(msg, type) {
+  const el = document.getElementById('usbStatus');
+  el.textContent = msg;
+  el.className = 'usb-status' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
+}
+
+function setConnPill(connected, error) {
+  const pill = document.getElementById('connPill');
+  pill.classList.toggle('connected', connected);
+  pill.classList.toggle('error', error || false);
+  document.getElementById('connText').textContent = error ? 'Erreur' : connected ? 'PARwise connecté' : 'Hors ligne';
+}
+
+function clearRaw() {
+  state.rawBuffer = '';
+  state.rxBytes = 0;
+  document.getElementById('usbRaw').innerHTML = '<span class="usb-raw-empty">Moniteur vidé.</span>';
+  document.getElementById('rxTag').textContent = '0 byte';
+}
+
+function copyRaw() {
+  const txt = document.getElementById('usbRaw').innerText;
+  navigator.clipboard.writeText(txt).then(() => alert('✓ Données brutes copiées'));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MANUAL ENTRY
+// ═══════════════════════════════════════════════════════════════
+function submitManual() {
+  const get = id => { const v = document.getElementById(id).value; return v === '' ? null : parseFloat(v); };
+  const m = {
+    cpur: get('mCpur'), par: get('mPar'), lux: get('mLux'), kelvin: get('mKelvin'),
+    chla: get('mChla'), chlb: get('mChlb'), chlc: get('mChlc'), chld: get('mChld'),
+    perid: get('mPerid'), fuco: get('mFuco'), bcar: get('mBcar'),
+  };
+  if (m.cpur === null && m.par === null) { alert('Saisis au moins cPUR ou PAR.'); return; }
+  
+  state.current = {
+    timestamp: Date.now(),
+    source: 'manual',
+    pos: document.getElementById('mPos').value,
+    depth: document.getElementById('mDepth').value,
+    notes: document.getElementById('mNotes').value,
+    cpur: m.cpur, par: m.par, lux: m.lux, kelvin: m.kelvin,
+    pigments: { chla:m.chla, chlb:m.chlb, chlc:m.chlc, chld:m.chld, perid:m.perid, fuco:m.fuco, bcar:m.bcar },
+  };
+  // Save to history
+  state.history.unshift({ ...state.current, id: Date.now() });
+  if (state.history.length > 100) state.history = state.history.slice(0, 100);
+  
+  saveState();
+  renderAll();
+  switchView('live');
+}
+
+function clearManual() {
+  ['mCpur','mPar','mLux','mKelvin','mChla','mChlb','mChlc','mChld','mPerid','mFuco','mBcar','mPos','mDepth','mNotes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════════
+function renderCockpit() {
+  const box = document.getElementById('cockpitBox');
+  if (!state.current) {
+    box.innerHTML = '<div class="empty-cockpit">Aucune mesure. Connecte le PARwise ou saisis une mesure manuelle.</div>';
+    return;
+  }
+  const c = state.current;
+  const cpur = c.cpur !== null ? Math.round(c.cpur) : '—';
+  const par = c.par !== null ? Math.round(c.par) : '—';
+  const lux = c.lux !== null ? Math.round(c.lux) : '—';
+  const kel = c.kelvin !== null ? Math.round(c.kelvin) : '—';
+  const ratio = (c.cpur && c.par) ? (c.cpur / c.par).toFixed(2) : '—';
+  const dli = c.cpur ? ((c.cpur * 12 * 3600 / 1000000).toFixed(1)) : '—';
+  const sourceTag = c.source === 'usb' ? 'PARwise USB' : 'Saisie manuelle';
+  const date = new Date(c.timestamp).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  
+  box.innerHTML = `
+    <div class="cm-grid">
+      <div class="cm-stat"><div class="lbl">cPUR</div><div class="val">${cpur}<small>µmol</small></div><div class="meta">${sourceTag} · ${date}</div></div>
+      <div class="cm-stat"><div class="lbl">PAR (PPFD)</div><div class="val">${par}<small>µmol</small></div><div class="meta">Ratio cPUR/PAR · ${ratio}</div></div>
+    </div>
+    <div class="cm-bottom">
+      <div class="cm-mini"><div class="v">${dli}</div><div class="l">DLI mol/j</div></div>
+      <div class="cm-mini"><div class="v">${lux}</div><div class="l">Lux</div></div>
+      <div class="cm-mini"><div class="v">${kel}</div><div class="l">Kelvin</div></div>
+    </div>`;
+}
+
+function renderPigments() {
+  const c = state.current;
+  if (!c || !c.pigments) {
+    document.getElementById('pigGood').innerHTML = '<p style="color:var(--text-faint);font-style:italic;text-align:center;padding:10px;font-size:12px">Aucune donnée pigmentaire</p>';
+    document.getElementById('pigBad').innerHTML = '';
+    document.getElementById('liveHelper').innerHTML = '';
+    return;
+  }
+  
+  const goodHtml = PIGMENTS.filter(p => p.desirable).map(p => renderPig(p, c.pigments[p.key])).join('');
+  const badHtml = PIGMENTS.filter(p => !p.desirable).map(p => renderPig(p, c.pigments[p.key])).join('');
+  
+  document.getElementById('pigGood').innerHTML = goodHtml || '<p style="color:var(--text-faint);font-style:italic;text-align:center;padding:10px;font-size:12px">Aucune donnée</p>';
+  document.getElementById('pigBad').innerHTML = badHtml || '';
+  
+  // Live helper
+  renderLiveHelper();
+}
+
+function renderPig(p, value) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return `
+      <div class="pig">
+        <div class="pig-meta">
+          <span class="pig-name">${p.name}<span class="lbd">${p.lambda}</span></span>
+          <span class="pig-pct neutral">—</span>
+        </div>
+        <div class="pig-track"><div class="pig-fill ${p.color}" style="width:0"></div><div class="pig-target" style="left:${p.target}%"></div></div>
+        <div class="pig-status">— Donnée non disponible</div>
+      </div>`;
+  }
+  const v = Math.round(value);
+  let status, statusClass, pctClass;
+  if (p.desirable) {
+    if (v >= p.target) { status = 'Optimal'; statusClass = pctClass = 'good'; }
+    else if (v >= p.target - 15) { status = 'Acceptable'; statusClass = pctClass = 'warn'; }
+    else { status = 'Insuffisant'; statusClass = pctClass = 'danger'; }
+  } else {
+    if (v <= p.target) { status = 'Sous contrôle'; statusClass = pctClass = 'good'; }
+    else if (v <= p.target + 20) { status = 'À surveiller · ' + p.warn; statusClass = pctClass = 'warn'; }
+    else { status = 'Sur-alimenté · risque ' + p.warn; statusClass = pctClass = 'danger'; }
+  }
+  return `
+    <div class="pig">
+      <div class="pig-meta">
+        <span class="pig-name">${p.name}<span class="lbd">${p.lambda}</span></span>
+        <span class="pig-pct ${pctClass}">${v} %</span>
+      </div>
+      <div class="pig-track"><div class="pig-fill ${p.color}" style="width:${v}%"></div><div class="pig-target" style="left:${p.target}%"></div></div>
+      <div class="pig-status ${statusClass}">— ${status}</div>
+    </div>`;
+}
+
+function renderLiveHelper() {
+  const c = state.current;
+  if (!c) { document.getElementById('liveHelper').innerHTML = ''; return; }
+  
+  let html = '';
+  
+  // cPUR check
+  if (c.cpur !== null) {
+    if (c.cpur < 150) {
+      html += `<div class="helper warn"><div class="helper-t">cPUR sous-optimal</div><div class="helper-x">${Math.round(c.cpur)} µmol est sous le seuil Ek de la majorité de tes Acropora (220–300). Voir l'onglet Réglages pour les ajustements.</div></div>`;
+    } else if (c.cpur > 320) {
+      html += `<div class="helper warn"><div class="helper-t">cPUR au-dessus de la cible</div><div class="helper-x">${Math.round(c.cpur)} µmol approche le seuil Em. Risque de blanchiment sur les morphs sensibles.</div></div>`;
+    }
+  }
+  
+  // Anti-pigment check
+  const chlb = c.pigments?.chlb;
+  const chld = c.pigments?.chld;
+  if (chlb > 60 || chld > 50) {
+    html += `<div class="helper danger"><div class="helper-t">Anti-pigments saturés</div><div class="helper-x">${chlb > 60 ? `Chl b à ${Math.round(chlb)}% → risque algues filamenteuses. ` : ''}${chld > 50 ? `Chl d à ${Math.round(chld)}% → risque cyanobactéries.` : ''} Voir l'onglet Réglages.</div></div>`;
+  }
+  
+  // All good
+  if (!html && c.cpur && (c.pigments?.chla || 0) >= 85) {
+    html = `<div class="helper"><div class="helper-t">Spectre dans la cible</div><div class="helper-x">Tes pigments coralliens sont bien alimentés et tes anti-pigments restent contrôlés. Excellente lumière pour tes Holy Grails.</div></div>`;
+  }
+  
+  document.getElementById('liveHelper').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DIAGNOSTIC
+// ═══════════════════════════════════════════════════════════════
+function renderDiag() {
+  const box = document.getElementById('diagBox');
+  const c = state.current;
+  if (!c) {
+    box.innerHTML = '<p style="color:var(--text-faint);font-style:italic;text-align:center;padding:24px">Aucune mesure à diagnostiquer.</p>';
+    return;
+  }
+  
+  // Compute global score
+  const goodPigs = PIGMENTS.filter(p => p.desirable);
+  const badPigs = PIGMENTS.filter(p => !p.desirable);
+  const validGood = goodPigs.filter(p => c.pigments?.[p.key] != null);
+  const validBad = badPigs.filter(p => c.pigments?.[p.key] != null);
+  
+  let score = 50;
+  if (validGood.length > 0) {
+    const goodAvg = validGood.reduce((s, p) => s + Math.min(100, c.pigments[p.key]), 0) / validGood.length;
+    const badAvg = validBad.length > 0 ? validBad.reduce((s, p) => s + c.pigments[p.key], 0) / validBad.length : 30;
+    score = Math.round(goodAvg * 0.65 + (100 - badAvg) * 0.35);
+  }
+  
+  const cls = score >= 80 ? 'good' : score >= 60 ? 'warn' : score >= 40 ? 'neutral' : 'danger';
+  const msg = score >= 85 ? 'Excellent · spectre optimisé pour tes Holy Grails' :
+              score >= 70 ? 'Bon · quelques ajustements possibles' :
+              score >= 55 ? 'Moyen · le spectre fuit vers les anti-pigments' :
+              score >= 40 ? 'Faible · revoir Cool White, Green, Red' :
+              'Critique · ajustements majeurs nécessaires';
+  
+  let html = `<div class="score-card">
+    <div class="score-num ${cls}">${score}<small>%</small></div>
+    <div class="score-lbl">Score pigmentaire global</div>
+    <div class="score-msg">${msg}</div>
+  </div>`;
+  
+  // Issues
+  const issues = [];
+  
+  // cPUR diagnosis
+  if (c.cpur !== null) {
+    if (c.cpur < 100) issues.push({ tag:'critique', cls:'danger', name:'cPUR très bas (' + Math.round(c.cpur) + ' µmol)', text:'Sous le seuil minimal pour la majorité des coraux. Croissance bloquée, blanchiment progressif possible.', cause:'Intensité globale insuffisante ou luminaires trop hauts.' });
+    else if (c.cpur < 180) issues.push({ tag:'attention', cls:'warn', name:'cPUR insuffisant pour SPS (' + Math.round(c.cpur) + ' µmol)', text:'Convient pour LPS et corals mous, sous le seuil Ek (220+) de tes Acropora.', cause:'Bleus sous-dosés ou photopériode courte.' });
+    else if (c.cpur > 350) issues.push({ tag:'risque', cls:'danger', name:'cPUR très élevé (' + Math.round(c.cpur) + ' µmol)', text:'Dépasse le seuil Em (350 µmol). Risque de photoinhibition et blanchiment des Holy Grails.', cause:'Intensité globale trop forte. Réduire de 15-20%.' });
+    else if (c.cpur > 280) issues.push({ tag:'attention', cls:'warn', name:'cPUR élevé (' + Math.round(c.cpur) + ' µmol)', text:'Convient à tes Acros canopée, mais sur-éclaire les LPS. Bien gérer le placement vertical.', cause:'Cible 220-280 pour SPS dominant.' });
+    else issues.push({ tag:'optimal', cls:'good', name:'cPUR optimal (' + Math.round(c.cpur) + ' µmol)', text:'Dans la fenêtre cible 220-280 µmol pour SPS dominant.', cause:'Maintenir cette intensité.' });
+  }
+  
+  // Pigment diagnosis
+  PIGMENTS.forEach(p => {
+    const v = c.pigments?.[p.key];
+    if (v == null || isNaN(v)) return;
+    if (p.desirable) {
+      if (v < p.target - 15) {
+        issues.push({ tag:'insuffisant', cls:'danger', name:p.name + ' à ' + Math.round(v) + ' %', text:`Sous-alimentée. Cible ≥ ${p.target} %.`, cause:`Bandes ${p.lambda} sous-éclairées. Augmenter Royal Blue ou Blue.` });
+      } else if (v < p.target) {
+        issues.push({ tag:'à améliorer', cls:'warn', name:p.name + ' à ' + Math.round(v) + ' %', text:`Légèrement sous la cible (${p.target} %).`, cause:`Marge d'amélioration sur ${p.lambda}.` });
+      }
+    } else {
+      if (v > p.target + 20) {
+        issues.push({ tag:'sur-alimenté', cls:'danger', name:p.name + ' à ' + Math.round(v) + ' %', text:`Sur-alimentée · risque ${p.warn}. Cible < ${p.target} %.`, cause:'Cool White, Green ou Red trop hauts.' });
+      } else if (v > p.target) {
+        issues.push({ tag:'à surveiller', cls:'warn', name:p.name + ' à ' + Math.round(v) + ' %', text:`Au-dessus de la cible (< ${p.target} %).`, cause:`Risque ${p.warn} si tendance se confirme.` });
+      } else {
+        issues.push({ tag:'contrôlé', cls:'good', name:p.name + ' à ' + Math.round(v) + ' %', text:`Sous le plafond cible (${p.target} %).`, cause:'Spectre bien contenu sur cette bande.' });
+      }
+    }
+  });
+  
+  if (issues.length === 0) {
+    html += '<p style="color:var(--text-faint);font-style:italic;text-align:center;padding:20px">Pas de données pigmentaires à diagnostiquer.</p>';
+  } else {
+    // Sort: danger first, warn second, good last
+    const order = { danger:0, warn:1, good:2 };
+    issues.sort((a,b) => order[a.cls] - order[b.cls]);
+    html += issues.map(i => `
+      <div class="diag-issue ${i.cls}">
+        <div class="diag-h"><span class="diag-name">${i.name}</span><span class="diag-tag ${i.cls}">${i.tag}</span></div>
+        <div class="diag-text">${i.text}</div>
+        <div class="diag-cause">→ ${i.cause}</div>
+      </div>`).join('');
+  }
+  
+  box.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADJUSTMENTS · the heart of the recommendation engine
+// ═══════════════════════════════════════════════════════════════
+function renderAdj() {
+  const box = document.getElementById('adjBox');
+  const c = state.current;
+  if (!c) {
+    box.innerHTML = '<p style="color:var(--text-faint);font-style:italic;text-align:center;padding:24px">Aucune mesure pour générer des recommandations.</p>';
+    return;
+  }
+  if (!c.pigments || Object.values(c.pigments).every(v => v == null)) {
+    box.innerHTML = '<p style="color:var(--text-faint);font-style:italic;text-align:center;padding:24px">Pas de données pigmentaires. Utilise l\'app PARwise officielle pour les % puis saisis manuellement.</p>';
+    return;
+  }
+  
+  const adjustments = computeAdjustments(c);
+  
+  if (adjustments.length === 0) {
+    box.innerHTML = '<div class="no-adj">✓ Spectre optimal · aucun ajustement requis. Maintiens ton réglage actuel.</div>';
+    return;
+  }
+  
+  box.innerHTML = adjustments.map((a, i) => `
+    <div class="adj-card ${i === 0 ? 'priority' : ''}">
+      <div class="adj-channel-row">
+        <span class="adj-dot ${a.channel.color}"></span>
+        <span class="adj-name">${a.channel.name}<span class="nm">${a.channel.nm > 0 ? a.channel.nm + ' nm' : '12 000 K'}</span></span>
+      </div>
+      <div class="adj-from-to">
+        <span class="adj-from">${a.from}%</span>
+        <span class="adj-arr">→</span>
+        <span class="adj-to">${a.to}%</span>
+      </div>
+      <div class="adj-explain"><strong>${a.action}</strong>${a.reason}</div>
+    </div>`).join('');
+}
+
+function computeAdjustments(c) {
+  // Estimate current channel values from preset (assume AB+ baseline if unknown)
+  // Real value: would need to know user's actual current Hydra settings.
+  // For now, use AB+ as estimated baseline.
+  const currentChannels = Object.fromEntries(CHANNELS.map(ch => [ch.key, ch.target]));
+  
+  const adjustments = [];
+  const pigs = c.pigments;
+  
+  // Rule 1: Chl b too high → reduce Cool White, Red, Green (in that order of impact)
+  if (pigs.chlb != null && pigs.chlb > 55) {
+    const excess = pigs.chlb - 50;
+    if (currentChannels.white > 12) {
+      const reduction = Math.min(8, Math.ceil(excess / 4));
+      adjustments.push({
+        channel: CHANNELS.find(c=>c.key==='white'),
+        from: currentChannels.white,
+        to: Math.max(10, currentChannels.white - reduction),
+        action: `Réduire Cool White de ${reduction} %. `,
+        reason: `Chl b à ${Math.round(pigs.chlb)} % indique trop de spectre large. Cool White est le premier coupable car il couvre toutes les longueurs d'onde, dont 460 et 645 nm de la chla b.`,
+        priority: 10,
+      });
+    }
+    if (currentChannels.red > 18) {
+      adjustments.push({
+        channel: CHANNELS.find(c=>c.key==='red'),
+        from: currentChannels.red,
+        to: Math.max(15, currentChannels.red - 3),
+        action: 'Réduire Red de 3 %. ',
+        reason: `Le pic 660 nm fuit vers 645 nm de Chl b. Garder Red entre 15 et 18 %.`,
+        priority: 8,
+      });
+    }
+  }
+  
+  // Rule 2: Chl d too high → reduce Red, Cool White
+  if (pigs.chld != null && pigs.chld > 40) {
+    const excess = pigs.chld - 35;
+    if (currentChannels.red > 16) {
+      const reduction = Math.min(6, Math.ceil(excess / 4));
+      adjustments.push({
+        channel: CHANNELS.find(c=>c.key==='red'),
+        from: currentChannels.red,
+        to: Math.max(12, currentChannels.red - reduction),
+        action: `Réduire Red de ${reduction} %. `,
+        reason: `Chl d à ${Math.round(pigs.chld)} % indique trop de far-red (697 nm). Red est le coupable principal. Risque cyanobactéries.`,
+        priority: 9,
+      });
+    }
+  }
+  
+  // Rule 3: Chla low → boost Royal Blue
+  if (pigs.chla != null && pigs.chla < 80) {
+    const deficit = 90 - pigs.chla;
+    const boost = Math.min(8, Math.ceil(deficit / 3));
+    adjustments.push({
+      channel: CHANNELS.find(c=>c.key==='royal'),
+      from: currentChannels.royal,
+      to: Math.min(95, currentChannels.royal + boost),
+      action: `Augmenter Royal Blue de ${boost} %. `,
+      reason: `Chla à ${Math.round(pigs.chla)} % sous la cible 90 %. Royal Blue 450 nm est le pic principal d'absorption de la chla.`,
+      priority: 9,
+    });
+  }
+  
+  // Rule 4: Peridinin low → boost Blue
+  if (pigs.perid != null && pigs.perid < 70) {
+    const boost = Math.min(8, Math.ceil((80 - pigs.perid) / 3));
+    adjustments.push({
+      channel: CHANNELS.find(c=>c.key==='blue'),
+      from: currentChannels.blue,
+      to: Math.min(95, currentChannels.blue + boost),
+      action: `Augmenter Blue de ${boost} %. `,
+      reason: `Péridinine à ${Math.round(pigs.perid)} % sous la cible 80 %. Le canal Blue 470 nm couvre son pic d'absorption (480 nm).`,
+      priority: 7,
+    });
+  }
+  
+  // Rule 5: Fucoxanthin low → boost Royal Blue / Blue
+  if (pigs.fuco != null && pigs.fuco < 75) {
+    if (!adjustments.find(a => a.channel.key === 'royal')) {
+      adjustments.push({
+        channel: CHANNELS.find(c=>c.key==='royal'),
+        from: currentChannels.royal,
+        to: Math.min(95, currentChannels.royal + 5),
+        action: 'Augmenter Royal Blue de 5 %. ',
+        reason: `Fucoxanthine à ${Math.round(pigs.fuco)} % sous la cible 85 %.`,
+        priority: 5,
+      });
+    }
+  }
+  
+  // Rule 6: cPUR low → boost Royal Blue + Blue proportionally
+  if (c.cpur != null && c.cpur < 180) {
+    if (!adjustments.find(a => a.channel.key === 'royal')) {
+      adjustments.push({
+        channel: CHANNELS.find(c=>c.key==='royal'),
+        from: currentChannels.royal,
+        to: Math.min(95, currentChannels.royal + 8),
+        action: 'Augmenter Royal Blue de 8 %. ',
+        reason: `cPUR à ${Math.round(c.cpur)} µmol sous le seuil SPS. Royal Blue est le canal le plus efficace pour augmenter le cPUR.`,
+        priority: 8,
+      });
+    }
+    if (!adjustments.find(a => a.channel.key === 'blue')) {
+      adjustments.push({
+        channel: CHANNELS.find(c=>c.key==='blue'),
+        from: currentChannels.blue,
+        to: Math.min(95, currentChannels.blue + 5),
+        action: 'Augmenter Blue de 5 %. ',
+        reason: `Soutien complémentaire au Royal Blue pour atteindre la cible cPUR.`,
+        priority: 7,
+      });
+    }
+  }
+  
+  // Rule 7: cPUR very high → reduce all proportionally
+  if (c.cpur != null && c.cpur > 320) {
+    adjustments.push({
+      channel: CHANNELS.find(c=>c.key==='royal'),
+      from: currentChannels.royal,
+      to: Math.max(70, currentChannels.royal - 5),
+      action: 'Réduire Royal Blue de 5 %. ',
+      reason: `cPUR à ${Math.round(c.cpur)} µmol approche le seuil Em. Réduction globale d'intensité.`,
+      priority: 9,
+    });
+  }
+  
+  // Sort by priority desc
+  adjustments.sort((a, b) => b.priority - a.priority);
+  
+  // De-duplicate by channel (keep highest priority per channel)
+  const seen = new Set();
+  return adjustments.filter(a => { if (seen.has(a.channel.key)) return false; seen.add(a.channel.key); return true; });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CORALS
+// ═══════════════════════════════════════════════════════════════
+function renderCorals() {
+  const cpur = parseInt(document.getElementById('cpurAtPos').value) || (state.current?.cpur ? Math.round(state.current.cpur) : 220);
+  document.getElementById('cpurAtPos').value = cpur;
+  const list = document.getElementById('coralList');
+  list.innerHTML = CORALS.map(c => {
+    let status, statusClass, optClass;
+    if (cpur < c.ek * 0.5) { status = 'Trop sombre'; statusClass = 'low'; optClass = 'opt-low'; }
+    else if (cpur < c.ek - 30) { status = 'Sous-optimal'; statusClass = 'low'; optClass = 'opt-low'; }
+    else if (cpur >= c.ek - 30 && cpur <= c.ek + 50) { status = 'Optimal'; statusClass = 'good'; optClass = 'opt-good'; }
+    else if (cpur <= c.em * 0.85) { status = 'Saturation'; statusClass = 'warn'; optClass = 'opt-warn'; }
+    else { status = 'Risque blanchiment'; statusClass = 'danger'; optClass = 'opt-danger'; }
+    return `
+      <div class="coral ${optClass}">
+        <div class="coral-r1">
+          <span class="coral-name">${c.name}${c.morph ? '<span class="morph">' + c.morph + '</span>' : ''}</span>
+          <span class="coral-type">${c.type}</span>
+        </div>
+        <div class="coral-r2"><span>Ek ${c.ek} · Em ${c.em} µmol</span><span class="coral-status ${statusClass}">${status}</span></div>
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════════════
+function renderHistory() {
+  const list = document.getElementById('histList');
+  document.getElementById('histCount').textContent = state.history.length + ' mesure' + (state.history.length > 1 ? 's' : '');
+  if (state.history.length === 0) {
+    list.innerHTML = '<p style="color:var(--text-faint);font-style:italic;text-align:center;padding:12px;font-size:12px">Aucune mesure enregistrée</p>';
+    return;
+  }
+  list.innerHTML = state.history.map(m => {
+    const d = new Date(m.timestamp);
+    const dateStr = d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' }) + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    return `
+      <div class="history-item">
+        <div class="h-date">${dateStr}</div>
+        <div class="h-info"><strong>${m.pos || '—'}</strong>${m.depth ? ' · ' + m.depth + ' cm' : ''}${m.notes ? '<br><span style="color:var(--text-faint);font-size:11px;font-style:italic">' + m.notes + '</span>' : ''}</div>
+        <span class="h-cpur">${m.cpur ? Math.round(m.cpur) + ' µmol' : '—'}</span>
+        <button class="del-x" onclick="delHistory(${m.id})">×</button>
+      </div>`;
+  }).join('');
+}
+
+function delHistory(id) {
+  state.history = state.history.filter(m => m.id !== id);
+  saveState();
+  renderHistory();
+}
+
+function clearHistory() {
+  if (!confirm('Effacer tout l\'historique ?')) return;
+  state.history = [];
+  saveState();
+  renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function switchView(view) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
+}
+
+document.getElementById('tabs').addEventListener('click', e => {
+  if (e.target.dataset.view) switchView(e.target.dataset.view);
+});
+
+function switchConn(mode) {
+  document.querySelectorAll('.conn-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.conn-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('ctab-' + mode).classList.add('active');
+  document.getElementById('conn-' + mode).classList.add('active');
+}
+
+function goConnect() { switchView('connect'); }
+
+function renderAll() {
+  renderCockpit();
+  renderPigments();
+  renderDiag();
+  renderAdj();
+  renderCorals();
+  renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+loadState();
+checkSerialSupport();
+renderAll();
+</script>
+</body>
+</html>
